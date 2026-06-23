@@ -53,6 +53,16 @@
     border:1px solid var(--line); border-radius:10px; height:38px; padding:0 10px; gap:8px;}
   .searchwrap input{flex:1; background:transparent; border:0; outline:0; color:var(--text); font-size:15px;}
   .searchwrap .clear{color:var(--muted); cursor:pointer; padding:4px; display:none;}
+  body.searchbaron header.bar .title{display:none;}
+
+  /* ---------- Bottom toolbar ---------- */
+  nav.bottombar{
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
+    padding:10px calc(14px + var(--safe-r)) calc(10px + var(--safe-b)) calc(14px + var(--safe-l));
+    background:var(--bg2); border-top:1px solid var(--line); flex:0 0 auto;
+  }
+  nav.bottombar .iconbtn{flex:1; height:48px; font-size:21px; border-radius:12px;}
+  nav.bottombar .iconbtn.primary{font-size:15px;}   /* テキストラベルなので小さめ */
 
   /* ---------- Library ---------- */
   #library{flex:1; overflow:auto; -webkit-overflow-scrolling:touch;
@@ -169,15 +179,17 @@
       <input id="search" type="search" placeholder="全文を検索…" autocomplete="off" enterkeyhint="search">
       <span class="clear" id="searchClear">✕</span>
     </div>
-    <span class="spacer"></span>
-    <button class="iconbtn" id="btnSearch" title="検索">🔍</button>
-    <button class="iconbtn danger" id="btnTrash" title="ゴミ箱（ドラッグして削除）" style="font-size:18px">🗑</button>
-    <button class="iconbtn primary" id="btnAdd" title="HTMLを取り込む">＋ 追加</button>
-    <button class="iconbtn" id="btnSettings" title="設定" style="font-size:22px">⚙</button>
   </header>
 
   <main id="library"></main>
   <section id="results" class="hidden"></section>
+
+  <nav class="bottombar">
+    <button class="iconbtn" id="btnSearch" title="検索">🔍</button>
+    <button class="iconbtn danger" id="btnTrash" title="ゴミ箱（ドラッグして削除）">🗑</button>
+    <button class="iconbtn primary" id="btnAdd" title="HTMLを取り込む">＋ 追加</button>
+    <button class="iconbtn" id="btnSettings" title="設定">⚙</button>
+  </nav>
 </div>
 
 <!-- Reader overlay -->
@@ -880,7 +892,7 @@ window.addEventListener("pointercancel", ()=>{ cleanupDrag(); drag=null; });
 
 $("#btnAdd").addEventListener("click", ()=> $("#fileInput").click());
 $("#fileInput").addEventListener("change", e=>{ importFiles(e.target.files); e.target.value=""; });
-$("#btnTrash").addEventListener("click", ()=> toast(t("trashHint")));
+$("#btnTrash").addEventListener("click", ()=>{ if(suppressClick){ suppressClick=false; return; } toast(t("trashHint")); });
 $("#catCancel").addEventListener("click", closeCatModal);
 catModal.addEventListener("click",(e)=>{ if(e.target===catModal) closeCatModal(); });
 $("#newCatBtn").addEventListener("click", ()=> createCategory($("#newCatInput").value));
@@ -888,8 +900,8 @@ $("#newCatInput").addEventListener("keydown",(e)=>{ if(e.key==="Enter") createCa
 
 $("#btnSearch").addEventListener("click", ()=>{
   const showing = !searchWrap.classList.contains("hidden");
-  if(showing){ searchWrap.classList.add("hidden"); searchInput.value=""; renderLibrary(); }
-  else{ searchWrap.classList.remove("hidden"); searchInput.focus(); }
+  if(showing){ searchWrap.classList.add("hidden"); document.body.classList.remove("searchbaron"); searchInput.value=""; renderLibrary(); }
+  else{ searchWrap.classList.remove("hidden"); document.body.classList.add("searchbaron"); searchInput.focus(); }
 });
 searchInput.addEventListener("input", ()=>{ clearTimeout(searchDebounce); searchDebounce=setTimeout(()=>doSearch(searchInput.value), 180); });
 searchClear.addEventListener("click", ()=>{ searchInput.value=""; searchInput.focus(); renderLibrary(); searchClear.style.display="none"; });
