@@ -55,18 +55,32 @@
   .searchwrap .clear{color:var(--muted); cursor:pointer; padding:4px; display:none;}
   body.searchbaron header.bar .title{display:none;}
 
-  /* ---------- Bottom toolbar ---------- */
+  /* ---------- Bottom tab bar ---------- */
   nav.bottombar{
-    display:flex; align-items:center; gap:10px; justify-content:space-between;
-    padding:10px calc(14px + var(--safe-r)) calc(10px + var(--safe-b)) calc(14px + var(--safe-l));
-    background:var(--bg2); border-top:1px solid var(--line); flex:0 0 auto;
+    display:flex; align-items:stretch; gap:4px;
+    padding:6px calc(8px + var(--safe-r)) calc(6px + var(--safe-b)) calc(8px + var(--safe-l));
+    background:rgba(23,26,33,.86); -webkit-backdrop-filter:blur(18px) saturate(160%);
+    backdrop-filter:blur(18px) saturate(160%); border-top:1px solid var(--line); flex:0 0 auto;
   }
-  nav.bottombar .iconbtn{flex:1; height:48px; font-size:21px; border-radius:12px;}
-  nav.bottombar .iconbtn.primary{font-size:15px;}   /* テキストラベルなので小さめ */
+  .tabbtn{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    background:transparent; border:0; color:var(--muted); cursor:pointer; padding:7px 4px;
+    border-radius:16px; font-family:inherit; min-height:54px;
+    transition:color .15s, background .15s, transform .08s;
+  }
+  .tabbtn .ic{font-size:23px; line-height:1; transition:transform .12s;}
+  .tabbtn .lb{font-size:11px; font-weight:600; letter-spacing:.02em;}
+  .tabbtn:active{transform:scale(.9);}
+  .tabbtn:active .ic{transform:scale(1.08);}
+  .tabbtn.add{color:var(--accent);}
+  .tabbtn.add .ic{width:40px; height:34px; border-radius:18px; display:flex; align-items:center;
+    justify-content:center; background:var(--accent2); color:#fff; font-size:22px; font-weight:600;
+    box-shadow:0 4px 14px rgba(58,111,216,.45);}
+  .tabbtn#btnTrash{color:#ff9aa8;}
 
   /* ---------- Library ---------- */
   #library{flex:1; overflow:auto; -webkit-overflow-scrolling:touch;
-    padding:14px calc(14px + var(--safe-r)) calc(20px + var(--safe-b)) calc(14px + var(--safe-l));}
+    padding:0 calc(14px + var(--safe-r)) calc(20px + var(--safe-b)) calc(14px + var(--safe-l));}
   .toolbar{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
   .toolbar select{background:var(--card); color:var(--text); border:1px solid var(--line);
     border-radius:10px; height:34px; padding:0 8px; font-size:13px;}
@@ -89,7 +103,8 @@
 
   /* category chips */
   .catbar{display:flex; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;
-    padding:2px 2px 14px; margin:0 -2px; scrollbar-width:none;}
+    padding:12px 2px; margin:0 -2px; scrollbar-width:none;
+    position:sticky; top:0; z-index:6; background:var(--bg); border-bottom:1px solid var(--line);}
   .catbar::-webkit-scrollbar{display:none;}
   .chip{flex:0 0 auto; background:var(--card); color:var(--text); border:1px solid var(--line);
     border-radius:999px; padding:13px 22px; font-size:16px; min-height:50px; cursor:pointer;
@@ -103,13 +118,12 @@
   .card.dragging-src{ opacity:.3; }
   .drag-ghost{ position:fixed; left:0; top:0; z-index:95; margin:0; pointer-events:none;
     box-shadow:0 14px 34px rgba(0,0,0,.55); opacity:.96; transform-origin:top left; transition:none; }
-  body.dragmode .catbar{ position:relative; }
   body.dragmode-card .chip:not([data-cat="__all__"]):not([data-cat="__add__"]){ box-shadow:0 0 0 1px var(--accent) inset; }
-  body.dragmode #btnTrash{ box-shadow:0 0 0 1px #ff9aa8 inset; transform:scale(1.06); }
+  body.dragmode #btnTrash{ background:rgba(90,42,51,.5); color:#fff; }
   .chip.drop-hot{ background:var(--accent) !important; border-color:#fff !important; color:#fff !important;
     transform:scale(1.1); box-shadow:0 0 0 2px #fff inset !important; }
-  #btnTrash.drop-hot{ background:#5a2a33 !important; border-color:#ff9aa8 !important; color:#fff !important;
-    transform:scale(1.14); box-shadow:0 0 0 2px #ff9aa8 inset !important; }
+  #btnTrash.drop-hot{ background:#5a2a33; color:#fff; transform:scale(1.04); }
+  #btnTrash.drop-hot .ic{ transform:scale(1.15); }
   .chip.chipadd{ color:var(--accent); border-style:dashed; font-weight:700; font-size:18px; padding:13px 18px; }
 
   /* modal / sheet */
@@ -185,10 +199,10 @@
   <section id="results" class="hidden"></section>
 
   <nav class="bottombar">
-    <button class="iconbtn" id="btnSearch" title="検索">🔍</button>
-    <button class="iconbtn danger" id="btnTrash" title="ゴミ箱（ドラッグして削除）">🗑</button>
-    <button class="iconbtn primary" id="btnAdd" title="HTMLを取り込む">＋ 追加</button>
-    <button class="iconbtn" id="btnSettings" title="設定">⚙</button>
+    <button class="tabbtn" id="btnSearch" title="検索"><span class="ic">🔍</span><span class="lb">検索</span></button>
+    <button class="tabbtn" id="btnTrash" title="ゴミ箱（ドラッグして削除）"><span class="ic">🗑</span><span class="lb">削除</span></button>
+    <button class="tabbtn add" id="btnAdd" title="HTMLを取り込む"><span class="ic">＋</span><span class="lb">追加</span></button>
+    <button class="tabbtn" id="btnSettings" title="設定"><span class="ic">⚙</span><span class="lb">設定</span></button>
   </nav>
 </div>
 
@@ -247,14 +261,14 @@
 const I18N = {
   ja: {
     searchPlaceholder:"全文を検索…",
-    btnSearch:"検索",
-    btnAdd:"HTMLを取り込む", btnAddLabel:"＋ 追加", settings:"設定",
+    btnSearch:"検索", btnAdd:"HTMLを取り込む", settings:"設定",
+    tabSearch:"検索", tabTrash:"削除", tabAdd:"追加", tabSettings:"設定",
     rBack:"‹ 戻る", rDelete:"この文書を削除",
     newCatPlaceholder:"新しいカテゴリー名",
     newCatBtn:"作成", catCancel:"キャンセル",
     dropHere:"ここにHTMLをドロップして取り込み",
     emptyTitle:"まだ何もありません",
-    emptyBody:"右上の「＋ 追加」かファイルのドラッグ&ドロップで<br>HTMLのまとめを取り込みましょう。",
+    emptyBody:"下の「＋ 追加」かファイルのドラッグ&ドロップで<br>HTMLのまとめを取り込みましょう。",
     catEmpty:"このカテゴリーは空です",
     countSummaries:n=>`${n}件のまとめ`,
     sortNew:"新しい順", sortOld:"古い順", sortTitle:"タイトル順",
@@ -281,14 +295,14 @@ const I18N = {
   },
   en: {
     searchPlaceholder:"Search full text…",
-    btnSearch:"Search",
-    btnAdd:"Import HTML", btnAddLabel:"＋ Add", settings:"Settings",
+    btnSearch:"Search", btnAdd:"Import HTML", settings:"Settings",
+    tabSearch:"Search", tabTrash:"Delete", tabAdd:"Add", tabSettings:"Settings",
     rBack:"‹ Back", rDelete:"Delete this document",
     newCatPlaceholder:"New category name",
     newCatBtn:"Create", catCancel:"Cancel",
     dropHere:"Drop HTML here to import",
     emptyTitle:"Nothing here yet",
-    emptyBody:"Use “＋ Add” at the top right or drag &amp; drop files<br>to import your HTML summaries.",
+    emptyBody:"Use “＋ Add” below or drag &amp; drop files<br>to import your HTML summaries.",
     catEmpty:"This category is empty",
     countSummaries:n=>`${n} item${n===1?"":"s"}`,
     sortNew:"Newest first", sortOld:"Oldest first", sortTitle:"By title",
@@ -703,10 +717,11 @@ async function deleteCategory(cat){
 function applyStaticI18n(){
   document.documentElement.lang = lang;
   searchInput.placeholder = t("searchPlaceholder");
-  $("#btnSearch").title = t("btnSearch");
-  $("#btnTrash").title = t("trash");
-  const ba=$("#btnAdd"); ba.title=t("btnAdd"); ba.textContent=t("btnAddLabel");
-  $("#btnSettings").title = t("settings");
+  const setTab=(id,title,label)=>{ const b=$(id); b.title=title; b.querySelector(".lb").textContent=label; };
+  setTab("#btnSearch", t("btnSearch"), t("tabSearch"));
+  setTab("#btnTrash", t("trash"), t("tabTrash"));
+  setTab("#btnAdd", t("btnAdd"), t("tabAdd"));
+  setTab("#btnSettings", t("settings"), t("tabSettings"));
   $("#rBack").textContent = t("rBack");
   $("#rDelete").title = t("rDelete");
   $("#newCatInput").placeholder = t("newCatPlaceholder");
