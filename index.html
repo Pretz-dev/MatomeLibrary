@@ -151,7 +151,10 @@
   .sheet .cancel{width:100%; margin-top:12px; height:44px; background:transparent; color:var(--muted);
     border:1px solid var(--line); border-radius:12px; font-size:15px; cursor:pointer;}
   .setlabel{color:var(--muted); font-size:13px; margin:2px 2px 10px;}
+  .setlabel-gap{margin-top:20px; padding-top:16px; border-top:1px solid var(--line);}
+  .sethint{color:var(--muted); font-size:12px; line-height:1.5; margin:-4px 2px 10px;}
   .catopt.langopt.active{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; color:var(--accent);}
+  .catopt.danger{color:#ff9aa8; border-color:#5a2a33;}
 
   /* drag over */
   #drop{position:fixed; inset:0; background:rgba(15,17,21,.92); z-index:50;
@@ -260,13 +263,29 @@
     <div class="setlabel" id="setLangLabel">言語 / Language</div>
     <button class="catopt langopt" data-lang="ja">🇯🇵 日本語</button>
     <button class="catopt langopt" data-lang="en">🇺🇸 English</button>
+    <div class="setlabel setlabel-gap" id="setBackupLabel">バックアップ</div>
+    <div class="sethint" id="setBackupHint">サイトデータの削除や機種変更に備えて、まとめをファイルに書き出せます。</div>
+    <button class="catopt" id="btnExport">💾 バックアップを書き出す</button>
+    <button class="catopt" id="btnImport">📥 バックアップから読み込む</button>
     <button class="cancel" id="setClose">閉じる</button>
+  </div>
+</div>
+
+<!-- Restore choice -->
+<div id="restoreModal" class="modal hidden">
+  <div class="sheet">
+    <h3 id="restoreTitle">バックアップの読み込み</h3>
+    <div class="sethint" id="restoreInfo"></div>
+    <button class="catopt" id="restoreAdd">追加する（今の内容に残す）</button>
+    <button class="catopt danger" id="restoreReplace">⚠️ 全置換する（今の内容を削除）</button>
+    <button class="cancel" id="restoreCancel">キャンセル</button>
   </div>
 </div>
 
 <div id="drop"><div class="box"><div style="font-size:40px">📥</div><div id="dropMsg">ここにHTMLをドロップして取り込み</div></div></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple class="hidden">
+<input type="file" id="backupInput" accept=".json,application/json" class="hidden">
 
 <script>
 "use strict";
@@ -309,6 +328,17 @@ const I18N = {
     catCreated:name=>`「${name}」を作成しました`,
     confirmDeleteCat:(cat,n)=>`カテゴリー「${cat}」を削除しますか？${n>0?`（${n}件は未分類になります）`:""}`,
     catDeleted:cat=>`カテゴリー「${cat}」を削除しました`,
+    backup:"バックアップ",
+    backupHint:"サイトデータの削除や機種変更に備えて、まとめをファイルに書き出せます。",
+    exportBtn:"💾 バックアップを書き出す", importBtn:"📥 バックアップから読み込む",
+    backupExported:n=>`${n}件を書き出しました`,
+    backupFailed:"バックアップに失敗しました",
+    backupInvalid:"正しいバックアップファイルではありません",
+    restoreTitle:"バックアップの読み込み",
+    restoreInfo:n=>`${n}件のまとめが含まれています。読み込み方法を選んでください。`,
+    restoreAdd:"追加する（今の内容に残す）", restoreReplace:"⚠️ 全置換する（今の内容を削除）",
+    confirmReplace:"今のまとめをすべて削除して、バックアップの内容に置き換えます。よろしいですか？",
+    restored:n=>`${n}件を読み込みました`,
   },
   en: {
     searchPlaceholder:"Search full text…",
@@ -343,6 +373,17 @@ const I18N = {
     catCreated:name=>`Created “${name}”`,
     confirmDeleteCat:(cat,n)=>`Delete category “${cat}”?${n>0?` (${n} item${n===1?"":"s"} will become uncategorized)`:""}`,
     catDeleted:cat=>`Deleted category “${cat}”`,
+    backup:"Backup",
+    backupHint:"Export your summaries to a file in case site data is cleared or you switch devices.",
+    exportBtn:"💾 Export backup", importBtn:"📥 Import backup",
+    backupExported:n=>`Exported ${n} item${n===1?"":"s"}`,
+    backupFailed:"Backup failed",
+    backupInvalid:"Not a valid backup file",
+    restoreTitle:"Import backup",
+    restoreInfo:n=>`Contains ${n} item${n===1?"":"s"}. Choose how to import.`,
+    restoreAdd:"Add (keep current items)", restoreReplace:"⚠️ Replace all (delete current)",
+    confirmReplace:"This will delete all current summaries and replace them with the backup. Continue?",
+    restored:n=>`Imported ${n} item${n===1?"":"s"}`,
   },
 };
 const LANG_KEY = "matome-lang";
@@ -393,6 +434,20 @@ async function bulkSetCategory(ids, cat){
 async function deleteDocs(ids){
   const t = tx(["meta","text","html"], "readwrite");
   ids.forEach(id=>{ t.objectStore("meta").delete(id); t.objectStore("text").delete(id); t.objectStore("html").delete(id); });
+  return new Promise((res,rej)=>{ t.oncomplete=res; t.onerror=()=>rej(t.error); });
+}
+// 全HTML原文を {id: html} で取得（バックアップ書き出し用）
+async function getAllHtml(){
+  return new Promise((res,rej)=>{
+    const out={}; const c = tx("html","readonly").objectStore("html").openCursor();
+    c.onsuccess=e=>{ const cur=e.target.result; if(cur){ out[cur.value.id]=cur.value.html; cur.continue(); } else res(out); };
+    c.onerror=()=>rej(c.error);
+  });
+}
+// 全まとめを削除（全置換リストア用）
+async function clearAllDocs(){
+  const t = tx(["meta","text","html"], "readwrite");
+  t.objectStore("meta").clear(); t.objectStore("text").clear(); t.objectStore("html").clear();
   return new Promise((res,rej)=>{ t.oncomplete=res; t.onerror=()=>rej(t.error); });
 }
 // テキストストアをカーソルで走査して検索（メモリを抑える）
@@ -747,6 +802,14 @@ function applyStaticI18n(){
   $("#dropMsg").textContent = t("dropHere");
   $("#setTitle").textContent = t("settingsTitle");
   $("#setLangLabel").textContent = t("language");
+  $("#setBackupLabel").textContent = t("backup");
+  $("#setBackupHint").textContent = t("backupHint");
+  $("#btnExport").textContent = t("exportBtn");
+  $("#btnImport").textContent = t("importBtn");
+  $("#restoreTitle").textContent = t("restoreTitle");
+  $("#restoreAdd").textContent = t("restoreAdd");
+  $("#restoreReplace").textContent = t("restoreReplace");
+  $("#restoreCancel").textContent = t("catCancel");
   $("#setClose").textContent = t("settingsDone");
 }
 // 言語変更時：ラベルを更新し、表示中の内容も描き直す
@@ -775,6 +838,89 @@ $("#btnSettings").addEventListener("click", openSettings);
 $("#setClose").addEventListener("click", closeSettings);
 setModal.addEventListener("click",(e)=>{ if(e.target===setModal) closeSettings(); });
 setModal.querySelectorAll(".langopt").forEach(b=> b.addEventListener("click",()=> setLang(b.dataset.lang)));
+
+/* ---------- バックアップ（書き出し / 読み込み） ---------- */
+const restoreModal = $("#restoreModal"), backupInput = $("#backupInput");
+let pendingBackup = null;
+
+async function exportBackup(){
+  let data;
+  try{
+    const htmlMap = await getAllHtml();
+    data = { app:"matome-library", version:1, exportedAt:Date.now(), lang, categories:catList,
+             docs: META.map(m=>({ meta:m, html: htmlMap[m.id] || "" })) };
+  }catch(err){ console.error(err); toast(t("backupFailed")); return; }
+  const json = JSON.stringify(data);
+  const d = new Date(), pad = n=>String(n).padStart(2,"0");
+  const fname = `matome-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
+  // iPhone等：共有シート経由で「ファイル」やiCloudに保存できる
+  try{
+    const file = new File([json], fname, {type:"application/json"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:"Matome Library backup"});
+      return;
+    }
+  }catch(err){ if(err && err.name==="AbortError") return; /* 共有不可ならダウンロードへ */ }
+  // PC等：通常のダウンロード
+  try{
+    const url = URL.createObjectURL(new Blob([json], {type:"application/json"}));
+    const a = document.createElement("a"); a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    toast(t("backupExported", data.docs.length));
+  }catch(err){ console.error(err); toast(t("backupFailed")); }
+}
+
+async function readBackup(file){
+  try{
+    const data = JSON.parse(await file.text());
+    if(!data || data.app!=="matome-library" || !Array.isArray(data.docs)){ toast(t("backupInvalid")); return; }
+    pendingBackup = data;
+    $("#restoreInfo").textContent = t("restoreInfo", data.docs.length);
+    restoreModal.classList.remove("hidden");
+  }catch(err){ console.error(err); toast(t("backupInvalid")); }
+}
+function closeRestore(){ restoreModal.classList.add("hidden"); pendingBackup=null; }
+
+async function applyRestore(modeOpt){   // "add" | "replace"
+  const data = pendingBackup; if(!data) return;
+  try{
+    if(modeOpt==="replace"){ await clearAllDocs(); META = []; }
+    const have = new Set(META.map(m=>m.id));
+    let count = 0;
+    for(const d of data.docs){
+      if(!d || !d.meta || !d.meta.id) continue;
+      const m = d.meta, html = d.html || "";
+      if(modeOpt==="add" && have.has(m.id)){           // 追加で衝突したら新IDを振る
+        m.id = (crypto.randomUUID ? crypto.randomUUID() : "id"+Date.now()+Math.random());
+      }
+      const text = parseDoc(html, m.name || m.title || "").text;
+      await putDoc(m, text, html);
+      const i = META.findIndex(x=>x.id===m.id);
+      if(i>=0) META[i]=m; else META.push(m);
+      have.add(m.id);
+      count++;
+    }
+    if(Array.isArray(data.categories)){
+      if(modeOpt==="replace") catList = [...data.categories];
+      else data.categories.forEach(c=>{ if(!catList.includes(c)) catList.push(c); });
+      saveCats();
+    }
+    closeRestore();
+    closeSettings();
+    filterCat = null;
+    renderLibrary();
+    toast(t("restored", count));
+  }catch(err){ console.error(err); toast(t("backupFailed")); }
+}
+
+$("#btnExport").addEventListener("click", exportBackup);
+$("#btnImport").addEventListener("click", ()=> backupInput.click());
+backupInput.addEventListener("change", e=>{ const f=e.target.files[0]; if(f) readBackup(f); e.target.value=""; });
+$("#restoreAdd").addEventListener("click", ()=> applyRestore("add"));
+$("#restoreReplace").addEventListener("click", ()=>{ if(confirm(t("confirmReplace"))) applyRestore("replace"); });
+$("#restoreCancel").addEventListener("click", closeRestore);
+restoreModal.addEventListener("click",(e)=>{ if(e.target===restoreModal) closeRestore(); });
 
 /* ---------- イベント ---------- */
 library.addEventListener("click",(e)=>{
@@ -979,6 +1125,8 @@ window.addEventListener("drop",e=>{ e.preventDefault(); dragDepth=0; document.bo
   }catch(err){
     library.innerHTML = `<div class="empty"><div class="big">⚠️</div><h2>${t("startupFailed")}</h2><p>${esc(String(err))}</p></div>`;
   }
+  // 空き容量不足による自動削除を受けにくくする（手動削除は防げない→バックアップ機能で対応）
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   if("serviceWorker" in navigator){
     try{ await navigator.serviceWorker.register("sw.js"); }catch(e){/* file://等では無視 */}
   }
