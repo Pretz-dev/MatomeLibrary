@@ -153,6 +153,7 @@
   .setlabel{color:var(--muted); font-size:13px; margin:2px 2px 10px;}
   .setlabel-gap{margin-top:20px; padding-top:16px; border-top:1px solid var(--line);}
   .sethint{color:var(--muted); font-size:12px; line-height:1.5; margin:-4px 2px 10px;}
+  .setver{text-align:center; color:var(--muted); font-size:12px; margin-top:16px; letter-spacing:.02em;}
   .catopt.langopt.active{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; color:var(--accent);}
   .catopt.danger{color:#ff9aa8; border-color:#5a2a33;}
 
@@ -267,6 +268,7 @@
     <div class="sethint" id="setBackupHint">サイトデータの削除や機種変更に備えて、まとめをファイルに書き出せます。</div>
     <button class="catopt" id="btnExport">💾 バックアップを書き出す</button>
     <button class="catopt" id="btnImport">📥 バックアップから読み込む</button>
+    <div class="setver" id="setVer"></div>
     <button class="cancel" id="setClose">閉じる</button>
   </div>
 </div>
@@ -292,6 +294,9 @@
 /* =================================================================
    まとめビューワー  — 単一ファイルPWA / IndexedDB保存
    ================================================================= */
+
+/* アプリのバージョン（GitHubのコミット番号と一致させる） */
+const APP_VERSION = "0.8";
 
 /* ---------- 多言語 (i18n) ---------- */
 const I18N = {
@@ -744,7 +749,9 @@ async function importFiles(fileList){
       const htmlStr = await f.text();
       const {title, text} = parseDoc(htmlStr, f.name);
       const id = (crypto.randomUUID ? crypto.randomUUID() : "id"+Date.now()+Math.random());
-      const meta = { id, title, snippet:text.slice(0,180), addedAt:Date.now(), len:htmlStr.length, name:f.name, category:"" };
+      // 日付はHTMLファイルの最終更新日時を使う（取得できなければ取り込み日時）
+      const fileDate = f.lastModified || Date.now();
+      const meta = { id, title, snippet:text.slice(0,180), addedAt:fileDate, len:htmlStr.length, name:f.name, category:"" };
       await putDoc(meta, text, htmlStr);
       META.push(meta); ok++;
     }catch(err){ console.error(err); }
@@ -810,6 +817,7 @@ function applyStaticI18n(){
   $("#restoreAdd").textContent = t("restoreAdd");
   $("#restoreReplace").textContent = t("restoreReplace");
   $("#restoreCancel").textContent = t("catCancel");
+  $("#setVer").textContent = `Matome Library  v${APP_VERSION}`;
   $("#setClose").textContent = t("settingsDone");
 }
 // 言語変更時：ラベルを更新し、表示中の内容も描き直す

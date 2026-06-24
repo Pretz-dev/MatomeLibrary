@@ -14,10 +14,11 @@
 
 ## Q2. まとめの日付はどの日付を参照していますか？
 
-そのHTMLを「このアプリに取り込んだ日時」です。
+そのHTMLファイルの「最終更新日時」です（作成後に編集していなければ、実質的に作成日になります）。
 
-- ファイル自体の作成日・更新日や、HTML内に書かれている日付ではありません。
-- 並び替えの「新しい順 / 古い順」も、この取り込み日時を基準にしています。
+- ブラウザの仕様上「作成日」そのものは取得できないため、ファイルの最終更新日時（`lastModified`）を使用します。
+- 何らかの理由で取得できない場合は、取り込んだ日時を使います。
+- 並び替えの「新しい順 / 古い順」も、この日付を基準にしています。
 
 ## Q3. 最大で何個のまとめファイルを保存できますか？
 
@@ -56,10 +57,11 @@ On your own device, inside the browser's storage. Nothing is sent to a server.
 
 ## Q2. Which date does a summary's date refer to?
 
-It's the date and time you imported the HTML into this app.
+It's the HTML file's last-modified date (which is effectively the creation date if the file hasn't been edited since).
 
-- It is not the file's creation/modification date, nor any date written inside the HTML.
-- The “Newest / Oldest” sort order is also based on this import time.
+- Browsers can't expose a true "creation date," so the file's last-modified time (`lastModified`) is used.
+- If it isn't available for some reason, the import time is used instead.
+- The “Newest / Oldest” sort order is also based on this date.
 
 ## Q3. How many summaries can I store at most?
 
