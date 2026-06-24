@@ -14,13 +14,15 @@
   :root{
     --bg:#0f1115; --bg2:#171a21; --card:#1c2029; --card2:#232834;
     --text:#e8eaed; --muted:#9aa3b2; --line:#2b313d;
-    --accent:#5b9dff; --accent2:#3a6fd8; --mark:#ffd24a;
+    --accent:#a78bfa; --accent2:#7c5cff; --mark:#ffd24a;
+    --grad:linear-gradient(135deg,#6366f1 0%,#7c5cff 55%,#a855f7 100%);
     --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
     --safe-l:env(safe-area-inset-left); --safe-r:env(safe-area-inset-right);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;height:100%;}
+  html{height:100%;}
   body{
+    margin:0; height:100vh; height:100dvh;
     background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
     overflow:hidden; overscroll-behavior:none;
@@ -46,7 +48,7 @@
     display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;
   }
   .iconbtn:active{background:var(--card2);}
-  .iconbtn.primary{background:var(--accent2); border-color:var(--accent2);}
+  .iconbtn.primary{background:var(--grad); border-color:transparent; color:#fff;}
   .iconbtn.danger{background:#3a1f25; border-color:#5a2a33; color:#ff9aa8;}
 
   .searchwrap{flex:1; display:flex; align-items:center; background:var(--card);
@@ -58,24 +60,26 @@
   /* ---------- Bottom tab bar ---------- */
   nav.bottombar{
     display:flex; align-items:stretch; gap:4px;
-    padding:6px calc(8px + var(--safe-r)) calc(6px + var(--safe-b)) calc(8px + var(--safe-l));
+    padding:6px calc(8px + var(--safe-r)) var(--safe-b) calc(8px + var(--safe-l));
     background:rgba(23,26,33,.86); -webkit-backdrop-filter:blur(18px) saturate(160%);
     backdrop-filter:blur(18px) saturate(160%); border-top:1px solid var(--line); flex:0 0 auto;
   }
   .tabbtn{
     flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-    background:transparent; border:0; color:var(--muted); cursor:pointer; padding:7px 4px;
-    border-radius:16px; font-family:inherit; min-height:54px;
+    background:transparent; border:0; color:var(--muted); cursor:pointer; padding:8px 4px 6px;
+    border-radius:16px; font-family:inherit; min-height:56px;
     transition:color .15s, background .15s, transform .08s;
   }
-  .tabbtn .ic{font-size:23px; line-height:1; transition:transform .12s;}
+  .tabbtn .ic{line-height:0; transition:transform .12s;}
+  .tabbtn .ic svg{width:26px; height:26px; display:block;}
   .tabbtn .lb{font-size:11px; font-weight:600; letter-spacing:.02em;}
   .tabbtn:active{transform:scale(.9);}
   .tabbtn:active .ic{transform:scale(1.08);}
   .tabbtn.add{color:var(--accent);}
-  .tabbtn.add .ic{width:40px; height:34px; border-radius:18px; display:flex; align-items:center;
-    justify-content:center; background:var(--accent2); color:#fff; font-size:22px; font-weight:600;
-    box-shadow:0 4px 14px rgba(58,111,216,.45);}
+  .tabbtn.add .ic{width:46px; height:34px; border-radius:17px; display:flex; align-items:center;
+    justify-content:center; background:var(--grad); color:#fff;
+    box-shadow:0 5px 16px rgba(124,92,255,.5);}
+  .tabbtn.add .ic svg{width:23px; height:23px;}
   .tabbtn#btnTrash{color:#ff9aa8;}
 
   /* ---------- Library ---------- */
@@ -102,16 +106,16 @@
   mark, .hl{background:var(--mark); color:#000; border-radius:3px; padding:0 1px;}
 
   /* category chips */
-  .catbar{display:flex; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;
-    padding:12px 2px; margin:0 -2px; scrollbar-width:none;
+  .catbar{display:flex; gap:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    padding:9px 2px; margin:0 -2px; scrollbar-width:none;
     position:sticky; top:0; z-index:6; background:var(--bg); border-bottom:1px solid var(--line);}
   .catbar::-webkit-scrollbar{display:none;}
   .chip{flex:0 0 auto; background:var(--card); color:var(--text); border:1px solid var(--line);
-    border-radius:999px; padding:13px 22px; font-size:16px; min-height:50px; cursor:pointer;
-    white-space:nowrap; display:flex; gap:8px; align-items:center;}
+    border-radius:999px; padding:7px 14px; font-size:13px; cursor:pointer;
+    white-space:nowrap; display:flex; gap:6px; align-items:center;}
   .chip:active{background:var(--card2);}
-  .chip.active{background:var(--accent2); border-color:var(--accent2); color:#fff;}
-  .chip .n{opacity:.7; font-size:13px;}
+  .chip.active{background:var(--grad); border-color:transparent; color:#fff;}
+  .chip .n{opacity:.7; font-size:11px;}
   .card .cat{display:inline-flex; align-items:center; gap:4px; background:var(--card2);
     border:1px solid var(--line); color:var(--accent); border-radius:999px; padding:2px 9px; font-size:11px; margin-top:8px; align-self:flex-start;}
   .card{ -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
@@ -120,11 +124,11 @@
     box-shadow:0 14px 34px rgba(0,0,0,.55); opacity:.96; transform-origin:top left; transition:none; }
   body.dragmode-card .chip:not([data-cat="__all__"]):not([data-cat="__add__"]){ box-shadow:0 0 0 1px var(--accent) inset; }
   body.dragmode #btnTrash{ background:rgba(90,42,51,.5); color:#fff; }
-  .chip.drop-hot{ background:var(--accent) !important; border-color:#fff !important; color:#fff !important;
+  .chip.drop-hot{ background:var(--accent2) !important; border-color:#fff !important; color:#fff !important;
     transform:scale(1.1); box-shadow:0 0 0 2px #fff inset !important; }
   #btnTrash.drop-hot{ background:#5a2a33; color:#fff; transform:scale(1.04); }
   #btnTrash.drop-hot .ic{ transform:scale(1.15); }
-  .chip.chipadd{ color:var(--accent); border-style:dashed; font-weight:700; font-size:18px; padding:13px 18px; }
+  .chip.chipadd{ color:var(--accent); border-style:dashed; font-weight:700; font-size:15px; padding:7px 13px; }
 
   /* modal / sheet */
   .modal{position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.55);
@@ -199,10 +203,22 @@
   <section id="results" class="hidden"></section>
 
   <nav class="bottombar">
-    <button class="tabbtn" id="btnSearch" title="検索"><span class="ic">🔍</span><span class="lb">検索</span></button>
-    <button class="tabbtn" id="btnTrash" title="ゴミ箱（ドラッグして削除）"><span class="ic">🗑</span><span class="lb">削除</span></button>
-    <button class="tabbtn add" id="btnAdd" title="HTMLを取り込む"><span class="ic">＋</span><span class="lb">追加</span></button>
-    <button class="tabbtn" id="btnSettings" title="設定"><span class="ic">⚙</span><span class="lb">設定</span></button>
+    <button class="tabbtn" id="btnSearch" title="検索">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.4"/><path d="M16 16l4.5 4.5"/></svg></span>
+      <span class="lb">検索</span>
+    </button>
+    <button class="tabbtn" id="btnTrash" title="ゴミ箱（ドラッグして削除）">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M6.7 7l.85 12a1.7 1.7 0 0 0 1.7 1.6h5.5a1.7 1.7 0 0 0 1.7-1.6L17.3 7"/><path d="M10.2 11v6M13.8 11v6"/></svg></span>
+      <span class="lb">削除</span>
+    </button>
+    <button class="tabbtn add" id="btnAdd" title="HTMLを取り込む">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5v13M5.5 12h13"/></svg></span>
+      <span class="lb">追加</span>
+    </button>
+    <button class="tabbtn" id="btnSettings" title="設定">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15z"/></svg></span>
+      <span class="lb">設定</span>
+    </button>
   </nav>
 </div>
 
