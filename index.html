@@ -154,6 +154,11 @@
   .setlabel-gap{margin-top:20px; padding-top:16px; border-top:1px solid var(--line);}
   .sethint{color:var(--muted); font-size:12px; line-height:1.5; margin:-4px 2px 10px;}
   .setver{text-align:center; color:var(--muted); font-size:12px; margin-top:16px; letter-spacing:.02em;}
+  .iconbtn.rdate{font-size:12.5px; color:var(--muted); padding:0 8px; gap:4px;}
+  .dateinput{width:100%; background:var(--card); border:1px solid var(--line); color:var(--text);
+    border-radius:12px; padding:0 12px; height:48px; font-size:16px; outline:none; margin-bottom:12px;
+    color-scheme:dark;}
+  #dateSave{width:100%; height:46px;}
   .catopt.langopt.active{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; color:var(--accent);}
   .catopt.danger{color:#ff9aa8; border-color:#5a2a33;}
 
@@ -232,6 +237,7 @@
   <div class="rbar">
     <button class="iconbtn" id="rBack">‹ 戻る</button>
     <span class="rtitle" id="rTitle"></span>
+    <button class="iconbtn rdate" id="rDate" title="日付を変更"></button>
     <button class="iconbtn" id="rDelete" title="この文書を削除">🗑</button>
   </div>
   <div id="stageWrap">
@@ -273,6 +279,16 @@
   </div>
 </div>
 
+<!-- Date editor -->
+<div id="dateModal" class="modal hidden">
+  <div class="sheet">
+    <h3 id="dateTitle">日付を変更</h3>
+    <input id="dateInput" type="date" class="dateinput">
+    <button class="iconbtn primary" id="dateSave">保存</button>
+    <button class="cancel" id="dateCancel">キャンセル</button>
+  </div>
+</div>
+
 <!-- Restore choice -->
 <div id="restoreModal" class="modal hidden">
   <div class="sheet">
@@ -296,7 +312,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "0.8";
+const APP_VERSION = "0.9";
 
 /* ---------- 多言語 (i18n) ---------- */
 const I18N = {
@@ -344,6 +360,7 @@ const I18N = {
     restoreAdd:"追加する（今の内容に残す）", restoreReplace:"⚠️ 全置換する（今の内容を削除）",
     confirmReplace:"今のまとめをすべて削除して、バックアップの内容に置き換えます。よろしいですか？",
     restored:n=>`${n}件を読み込みました`,
+    editDate:"日付を変更", dateTitle:"日付を変更", dateSave:"保存", dateSaved:"日付を変更しました",
   },
   en: {
     searchPlaceholder:"Search full text…",
@@ -389,6 +406,7 @@ const I18N = {
     restoreAdd:"Add (keep current items)", restoreReplace:"⚠️ Replace all (delete current)",
     confirmReplace:"This will delete all current summaries and replace them with the backup. Continue?",
     restored:n=>`Imported ${n} item${n===1?"":"s"}`,
+    editDate:"Edit date", dateTitle:"Edit date", dateSave:"Save", dateSaved:"Date updated",
   },
 };
 const LANG_KEY = "matome-lang";
@@ -434,6 +452,11 @@ async function putDoc(meta, text, html){
 async function bulkSetCategory(ids, cat){
   const t = tx("meta", "readwrite"); const store = t.objectStore("meta");
   for(const id of ids){ const m = META.find(x=>x.id===id); if(m){ m.category = cat; store.put(m); } }
+  return new Promise((res,rej)=>{ t.oncomplete=res; t.onerror=()=>rej(t.error); });
+}
+// メタ情報だけを保存（本文・HTMLはそのまま）
+async function saveMeta(meta){
+  const t = tx("meta", "readwrite"); t.objectStore("meta").put(meta);
   return new Promise((res,rej)=>{ t.oncomplete=res; t.onerror=()=>rej(t.error); });
 }
 async function deleteDocs(ids){
@@ -646,6 +669,7 @@ async function showDoc(i){
   const id=viewList[i];
   const m=META.find(x=>x.id===id);
   $("#rTitle").textContent = m?m.title:"";
+  $("#rDate").textContent = m?fmtDate(m.addedAt):"";
   $("#rCounter").textContent = `${i+1} / ${viewList.length}`;
   const rec = await getHtml(id);
   const html = rec ? rec.html : `<p>${t("bodyNotFound")}</p>`;
@@ -686,7 +710,36 @@ function bounce(dir){
   setTimeout(()=>{ stage.style.transform="translateX(0)"; }, 120);
   toast(dir==="next"?t("lastSummary"):t("firstSummary"));
 }
-function closeReader(){ reader.classList.add("hidden"); docFrame.srcdoc="about:blank"; document.body.style.overflow=""; }
+function closeReader(){
+  reader.classList.add("hidden"); docFrame.srcdoc="about:blank"; document.body.style.overflow="";
+  if(libraryDirty){ libraryDirty=false; renderLibrary(); }   // 日付変更などを一覧へ反映
+}
+
+/* ---------- 日付の編集 ---------- */
+const dateModal=$("#dateModal"), dateInput=$("#dateInput");
+let editingDateId=null, libraryDirty=false;
+function toDateInputValue(ts){ const d=new Date(ts), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function openDateEditor(){
+  const id=viewList[curIndex]; const m=META.find(x=>x.id===id); if(!m) return;
+  editingDateId=id; dateInput.value=toDateInputValue(m.addedAt);
+  dateModal.classList.remove("hidden");
+}
+function closeDateModal(){ dateModal.classList.add("hidden"); editingDateId=null; }
+async function saveDate(){
+  const m=META.find(x=>x.id===editingDateId); const v=dateInput.value;
+  if(!m || !v){ closeDateModal(); return; }
+  const [y,mo,da]=v.split("-").map(Number);
+  m.addedAt = new Date(y, mo-1, da, 12, 0, 0).getTime();   // 正午基準でタイムゾーン境界の日付ずれを回避
+  await saveMeta(m);
+  libraryDirty = true;                                     // 一覧は閉じたときに再描画
+  $("#rDate").textContent = fmtDate(m.addedAt);
+  closeDateModal();
+  toast(t("dateSaved"));
+}
+$("#rDate").addEventListener("click", openDateEditor);
+$("#dateSave").addEventListener("click", saveDate);
+$("#dateCancel").addEventListener("click", closeDateModal);
+dateModal.addEventListener("click",(e)=>{ if(e.target===dateModal) closeDateModal(); });
 
 // iframe内に注入：スワイプ検出 + ハイライト
 const INJECT = `<script>(function(){
@@ -803,6 +856,10 @@ function applyStaticI18n(){
   setTab("#btnSettings", t("settings"), t("tabSettings"));
   $("#rBack").textContent = t("rBack");
   $("#rDelete").title = t("rDelete");
+  $("#rDate").title = t("editDate");
+  $("#dateTitle").textContent = t("dateTitle");
+  $("#dateSave").textContent = t("dateSave");
+  $("#dateCancel").textContent = t("catCancel");
   $("#newCatInput").placeholder = t("newCatPlaceholder");
   $("#newCatBtn").textContent = t("newCatBtn");
   $("#catCancel").textContent = t("catCancel");
