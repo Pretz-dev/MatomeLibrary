@@ -89,16 +89,16 @@
   .toolbar select{background:var(--card); color:var(--text); border:1px solid var(--line);
     border-radius:10px; height:34px; padding:0 8px; font-size:13px;}
   .count{color:var(--muted); font-size:13px;}
-  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px;}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;
     cursor:pointer; position:relative; overflow:hidden; transition:transform .08s, border-color .15s, box-shadow .15s;
-    display:flex; flex-direction:column; min-height:118px;
+    display:flex; flex-direction:column; aspect-ratio:1 / 1;
     box-shadow:0 8px 24px rgba(0,0,0,.30), 0 0 0 1px rgba(124,92,255,.04);}
   .card:active{transform:scale(.985);}
-  .card h3{margin:0 0 6px; font-size:15px; line-height:1.35; max-height:2.7em; overflow:hidden;}
-  .card p{margin:0; color:var(--muted); font-size:12.5px; line-height:1.5; flex:1;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
-  .card .meta{margin-top:10px; color:var(--muted); font-size:11px; display:flex; justify-content:space-between;}
+  .card h3{margin:0 0 5px; font-size:14px; line-height:1.35; max-height:2.7em; overflow:hidden;}
+  .card p{margin:0; color:var(--muted); font-size:12px; line-height:1.5; flex:1; min-height:0;
+    display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;}
+  .card .meta{margin-top:8px; color:var(--muted); font-size:10.5px; display:flex; justify-content:space-between;}
 
   .empty{text-align:center; color:var(--muted); padding:60px 20px;}
   .empty .big{font-size:46px; margin-bottom:12px;}
@@ -118,7 +118,8 @@
   .chip.active{background:var(--grad); border-color:transparent; color:#fff;}
   .chip .n{opacity:.7; font-size:11px;}
   .card .cat{display:inline-flex; align-items:center; gap:4px; background:var(--card2);
-    border:1px solid var(--line); color:var(--accent); border-radius:999px; padding:2px 9px; font-size:11px; margin-top:8px; align-self:flex-start;}
+    border:1px solid var(--line); color:var(--accent); border-radius:999px; padding:1px 8px; font-size:10px;
+    margin-top:6px; align-self:flex-start; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .card{ -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
   .card.dragging-src{ opacity:.3; }
   .drag-ghost{ position:fixed; left:0; top:0; z-index:95; margin:0; pointer-events:none;
@@ -312,7 +313,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
 
 /* iOS等でビューポート高さが揺れて下部バーが上にズレる問題への対策。
    CSSの100dvh任せにせず、実際の表示高さ(window.innerHeight)を測ってCSS変数に反映し、
