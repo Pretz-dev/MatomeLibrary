@@ -20,7 +20,7 @@ AIエージェント（Claude Code など）の出力は、少しずつ **Markdo
 - 📥 **取り込み** — HTMLを「追加」かドラッグ&ドロップで入れるだけ。タイトルと本文は自動で抽出されます。
 - 👆 **スワイプで読む** — まとめからまとめへ、左右スワイプやキー操作で移動できます。
 - 🔍 **全文検索** — すべてのまとめを横断して検索し、ヒット箇所をハイライト。開くとその位置までスクロールします。
-- 🗂 **整理** — カードをカテゴリーへドラッグで分類、ゴミ箱へドラッグで削除。「＋」でカテゴリーを追加できます。
+- 🗂 **タグで整理** — 1つのまとめに複数のタグを付けられます。カードをタグへドラッグで付与、ゴミ箱へドラッグで削除。「＋」でタグを追加できます。
 - 💾 **バックアップ** — 設定からまとめをファイルに書き出し／読み込み。サイトデータの削除や機種変更のときに復元できます。
 - 📱 **オフライン対応** — データは端末内に保存。ホーム画面に追加すれば全画面で起動し、電波がなくても読めます。
 - 🌐 **日本語 / 英語** — 設定（⚙）から切り替えられます。
@@ -30,7 +30,7 @@ AIエージェント（Claude Code など）の出力は、少しずつ **Markdo
 1. **取り込む** — 下部の「＋ 追加」からHTMLを選ぶ（PCならドラッグ&ドロップ、複数同時も可）。
 2. **読む** — カードをタップして開き、左右スワイプで前後のまとめへ。
 3. **探す** — 下部の「🔍」で全文検索。ヒットしたまとめを開くと検索語の位置まで自動でスクロール。
-4. **片づける** — カードを🗑へドラッグで削除、カテゴリーチップへドラッグで分類。「＋」チップでカテゴリー作成。カテゴリーを🗑へドラッグするとそのカテゴリーを削除（中のまとめは未分類に戻ります）。
+4. **タグを付ける** — まとめを開いて上部の🏷からタグをオン/オフ（複数選択可）・新規作成。一覧ではカードをタグチップへドラッグで付与、「＋」チップでタグ作成。タグを🗑へドラッグするとそのタグを削除（まとめ自体は残り、タグだけ外れます）。
 5. **備える** — 設定（⚙）の「バックアップ」から、ときどきファイルに書き出しておくと安心です。
 
 困ったときは [FAQ](FAQ.md) もご覧ください。
@@ -68,8 +68,8 @@ python3 -m http.server 8000
 - 各まとめは `<iframe sandbox>` で隔離表示するため、まとめ側のCSS/JSがアプリ本体に干渉しません。
 - 横スワイプは iframe 内に注入した軽量スクリプトがジェスチャを検出し、本体へ通知します（縦スクロールでの読書は妨げません）。
 - 検索は IndexedDB をカーソルで走査するため、まとめが多くてもメモリを抑えて動きます。
-- カテゴリー一覧は `localStorage` に保存され、空のカテゴリーも保持されます。
-- バックアップは全まとめ（HTML原文＋メタ情報＋カテゴリー）を1つのJSONファイルに書き出します。
+- 各まとめはタグの配列を持ち、タグ一覧は `localStorage` に保存されます（使われていないタグも保持）。
+- バックアップは全まとめ（HTML原文＋メタ情報＋タグ）を1つのJSONファイルに書き出します。
 
 ---
 
@@ -93,7 +93,7 @@ But here's the catch: all that brilliant HTML quickly piles up and vanishes into
 - 📥 **Effortless import** — Just hit “Add” or drag & drop. Titles and body text are extracted instantly into clean, tappable cards.
 - 👆 **Read it like a book** — Glide between summaries with a swipe (or arrow keys). AI's output finally feels like something you *want* to read.
 - 🔍 **Instant full-text search** — Search across your *entire* library in one shot, with matches highlighted and the reader jumping straight to the line.
-- 🗂 **Organize with a flick** — Drag a card onto a category to file it, or onto the trash to delete it. Spin up new categories with a single “＋”. The category bar stays pinned, always in reach.
+- 🗂 **Tag it your way** — Give each summary as many tags as you like. Drag a card onto a tag to apply it, or onto the trash to delete it. Spin up new tags with a single “＋”. The tag bar stays pinned, always in reach.
 - 💾 **Bulletproof backup** — Export your whole library to one file and restore it anytime. Switch phones or wipe site data without losing a thing.
 - 📱 **Offline, always** — Everything is stored on-device. Add it to your home screen and it launches full-screen like a native app — no signal required.
 - 🌐 **English / Japanese** — Flip between languages instantly from Settings (⚙).
@@ -103,7 +103,7 @@ But here's the catch: all that brilliant HTML quickly piles up and vanishes into
 1. **Import** — Tap “＋ Add” in the bottom bar and pick your HTML (or drag & drop on desktop; batches welcome).
 2. **Read** — Tap a card, then swipe left/right to move through your summaries.
 3. **Find** — Tap “🔍” for full-text search; open a hit and it auto-scrolls right to the match.
-4. **Tidy up** — Drag a card to 🗑 to delete, or onto a category chip to file it. Use the “＋” chip to create a category. Drag a category onto 🗑 to remove it (its summaries return to uncategorized).
+4. **Tag** — Open a summary and use 🏷 at the top to toggle tags on/off (pick as many as you like) or create new ones. In the list, drag a card onto a tag chip to apply it, or use the “＋” chip to create a tag. Drag a tag onto 🗑 to remove it (summaries stay; only the tag is removed).
 5. **Stay safe** — Pop into Settings (⚙) → Backup now and then, and your library is untouchable.
 
 Got questions? The [FAQ](FAQ.md) has you covered.
@@ -141,5 +141,5 @@ Open http://localhost:8000/ in your browser.
 - Each summary renders inside an `<iframe sandbox>`, so its CSS/JS can't interfere with the app shell.
 - Horizontal swipes are detected by a tiny script injected into the iframe, which notifies the shell (vertical scroll reading is never blocked).
 - Search walks the IndexedDB store with a cursor, keeping memory low even with many summaries.
-- The category list is persisted in `localStorage`, so empty categories are kept.
-- Backup exports everything (raw HTML + metadata + categories) into a single JSON file.
+- Each summary holds an array of tags; the tag list is persisted in `localStorage` (unused tags are kept too).
+- Backup exports everything (raw HTML + metadata + tags) into a single JSON file.

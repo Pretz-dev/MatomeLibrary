@@ -7,7 +7,7 @@
 お使いの端末内（ブラウザのデータ領域）に保存されます。サーバーには送信されません。
 
 - 保存先はブラウザの **IndexedDB**（データベース名 `matome-viewer`）です。1まとめにつき、(1) メタ情報、(2) 検索用に抽出した本文テキスト、(3) HTML原文 を保存します。
-- カテゴリー一覧と言語設定は別途 `localStorage` に保存されます。
+- タグ一覧と言語設定は別途 `localStorage` に保存されます。
 - すべて端末ローカルのため、端末・ブラウザをまたいでは共有されません（別の端末で見たい場合は、その端末でも同じHTMLを取り込んでください）。
 - ホーム画面に追加したアプリ（PWA）と Safari は、同じ保存領域を共有します。
 - ⚠️ ブラウザの「サイトデータの削除」やアプリ（PWA）の削除を行うと、取り込んだまとめも消えます。**ただし、設定（⚙）の「バックアップを書き出す」でファイルに保存しておけば、「バックアップから読み込む」でいつでも復元できます。** 機種変更のときも同じ手順で移行できます。
@@ -34,10 +34,10 @@
 
 - **読む（リーダー）**：開いたまとめだけを読み込む仕組みなので、件数が増えても重くなりません。
 - **検索**：全まとめの本文を順番に走査する方式です（メモリは抑えています）。件数・文章量に比例して時間が増えるため、数千件規模だと検索に少し時間がかかることがあります。
-- **一覧表示**：該当するカードを一度にまとめて描画します。数千件など極端に多いと、初期表示やスクロールがもたつくことがあります。→ カテゴリーで絞り込むと表示件数が減り、軽くなります。
+- **一覧表示**：該当するカードを一度にまとめて描画します。数千件など極端に多いと、初期表示やスクロールがもたつくことがあります。→ タグで絞り込むと表示件数が減り、軽くなります。
 - **起動時**：全まとめのメタ情報をメモリに読み込みます（メタは軽量なので通常は問題ありません）。
 
-> 💡 まとめが増えてきたら、カテゴリー分け＋絞り込みで使うのが快適さのコツです。
+> 💡 まとめが増えてきたら、タグ付け＋絞り込みで使うのが快適さのコツです。
 
 ---
 
@@ -50,7 +50,7 @@
 On your own device, inside the browser's storage. Nothing is sent to a server.
 
 - It's saved in the browser's **IndexedDB** (database name `matome-viewer`). For each summary it stores (1) metadata, (2) the extracted body text for search, and (3) the raw HTML.
-- The category list and language setting are stored separately in `localStorage`.
+- The tag list and language setting are stored separately in `localStorage`.
 - Because everything is local, it isn't shared across devices or browsers (to view on another device, import the same HTML there).
 - An app added to your home screen (PWA) and Safari share the same storage.
 - ⚠️ Clearing the browser's site data, or deleting the PWA, will also remove your imported summaries. **However, if you export a file via Settings (⚙) → “Export backup,” you can restore it anytime with “Import backup.”** The same steps work for moving to a new device.
@@ -77,7 +77,7 @@ Typical use (up to a few hundred) stays smooth. With extreme counts, a few thing
 
 - **Reading**: only the opened summary is loaded, so this never slows down as your count grows.
 - **Search**: it scans every summary's text sequentially (with low memory use). Time grows with the number and length of summaries, so search may take a moment at the thousands scale.
-- **List view**: all matching cards are rendered at once. With extreme counts (thousands), initial render and scrolling may stutter. → Filtering by category reduces the number drawn and speeds things up.
+- **List view**: all matching cards are rendered at once. With extreme counts (thousands), initial render and scrolling may stutter. → Filtering by tag reduces the number drawn and speeds things up.
 - **Startup**: all summary metadata is loaded into memory (metadata is light, so this is usually fine).
 
-> 💡 As your library grows, using categories + filtering is the trick to keeping things snappy.
+> 💡 As your library grows, using tags + filtering is the trick to keeping things snappy.
