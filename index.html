@@ -44,7 +44,8 @@
     background:var(--bg2); border-bottom:1px solid var(--line); flex:0 0 auto;
   }
   header.bar .title{font-size:17px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    display:flex; align-items:center; gap:9px;}
+    display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; -webkit-user-select:none;}
+  header.bar .title:active{opacity:.6;}
   header.bar .title .applogo{width:28px; height:28px; border-radius:7px; flex:0 0 auto; display:block;}
   header.bar .spacer{flex:1;}
   .iconbtn{
@@ -336,7 +337,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "1.4";
+const APP_VERSION = "1.5";
 
 /* iOS等でビューポート高さが揺れて下部バーが上にズレる問題への対策。
    CSSの100dvh任せにせず、実際の表示高さ(window.innerHeight)を測ってCSS変数に反映し、
@@ -1236,6 +1237,18 @@ $("#catCancel").addEventListener("click", closeCatModal);
 catModal.addEventListener("click",(e)=>{ if(e.target===catModal) closeCatModal(); });
 $("#newCatBtn").addEventListener("click", ()=> createCategory($("#newCatInput").value));
 $("#newCatInput").addEventListener("keydown",(e)=>{ if(e.key==="Enter") createCategory(e.target.value); });
+
+// タイトルをタップ → 初期画面（検索・絞り込みを解除して先頭表示）
+$("#appTitle").addEventListener("click", ()=>{
+  if(!reader.classList.contains("hidden")) closeReader();
+  if(!searchWrap.classList.contains("hidden")){
+    searchWrap.classList.add("hidden"); document.body.classList.remove("searchbaron");
+    searchInput.value=""; searchClear.style.display="none";
+  }
+  filterCat = null;
+  renderLibrary();
+  library.scrollTop = 0;
+});
 
 $("#btnSearch").addEventListener("click", ()=>{
   const showing = !searchWrap.classList.contains("hidden");
