@@ -129,9 +129,12 @@
   .drag-ghost{ position:fixed; left:0; top:0; z-index:95; margin:0; pointer-events:none;
     box-shadow:0 14px 34px rgba(0,0,0,.45); opacity:.5; transform-origin:top left; transition:none; }
   body.dragmode-card .chip:not([data-cat="__all__"]):not([data-cat="__add__"]){ box-shadow:0 0 0 1px var(--accent) inset; }
+  body.dragmode-cat .card{ box-shadow:0 8px 24px rgba(0,0,0,.30), 0 0 0 1px var(--accent) inset; }
   body.dragmode #btnTrash{ background:rgba(90,42,51,.5); color:#fff; }
   .chip.drop-hot{ background:var(--accent2) !important; border-color:#fff !important; color:#fff !important;
     transform:scale(1.1); box-shadow:0 0 0 2px #fff inset !important; }
+  .card.drop-hot{ border-color:var(--accent) !important;
+    box-shadow:0 0 0 2px var(--accent) inset, 0 10px 26px rgba(124,92,255,.35) !important; transform:scale(1.02); }
   #btnTrash.drop-hot{ background:#5a2a33; color:#fff; transform:scale(1.04); }
   #btnTrash.drop-hot .ic{ transform:scale(1.15); }
   .chip.chipadd{ color:var(--accent); border-style:dashed; font-weight:700; font-size:15px; padding:7px 13px; }
@@ -331,7 +334,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "1.2";
+const APP_VERSION = "1.3";
 
 /* iOS等でビューポート高さが揺れて下部バーが上にズレる問題への対策。
    CSSの100dvh任せにせず、実際の表示高さ(window.innerHeight)を測ってCSS変数に反映し、
@@ -1100,12 +1103,15 @@ function dropTargetAt(x,y){
     if(k==="__all__" || k==="__add__") return null;
     return {kind:"chip", el:chip, cat:k};
   }
+  const card = el.closest(".card");
+  if(card) return {kind:"card", el:card, id:card.dataset.id};
   return null;
 }
 function validTarget(tgt){
   if(!tgt) return null;
-  if(tgt.kind==="trash") return tgt;                       // まとめ・カテゴリーとも削除可
-  if(tgt.kind==="chip" && drag.type==="card") return tgt;  // 分類はまとめのみ
+  if(tgt.kind==="trash") return tgt;                       // まとめ・タグとも削除可
+  if(tgt.kind==="chip" && drag.type==="card") return tgt;  // まとめ → タグチップ ＝ 付与
+  if(tgt.kind==="card" && drag.type==="cat" && tgt.id!==drag.el.dataset.id) return tgt;  // タグ → まとめ ＝ 付与
   return null;
 }
 function clearDropHot(){ document.querySelectorAll(".drop-hot").forEach(c=>c.classList.remove("drop-hot")); }
@@ -1210,7 +1216,9 @@ function finishDrag(e){
     if(type==="card") deleteByDrop(payload);
     else if(type==="cat") deleteCategory(payload);
   }else if(tgt.kind==="chip" && type==="card"){
-    assignByDrop(payload, tgt.cat==="__none__" ? "" : tgt.cat);
+    assignByDrop(payload, tgt.cat==="__none__" ? "" : tgt.cat);   // まとめ → タグチップ
+  }else if(tgt.kind==="card" && type==="cat"){
+    assignByDrop(tgt.id, payload);                                // タグ → まとめ
   }
 }
 window.addEventListener("pointerup", finishDrag);
