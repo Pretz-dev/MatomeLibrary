@@ -124,6 +124,7 @@
   .card .cat.more{color:var(--muted);}
   .tagpick{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; max-height:46vh; overflow:auto;}
   .tagpick .chip{cursor:pointer;}
+  .tagpick .chip .x{opacity:.85; font-size:11px; margin-left:1px;}
   .card{ -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
   .card.dragging-src{ opacity:.3; }
   .drag-ghost{ position:fixed; left:0; top:0; z-index:95; margin:0; pointer-events:none;
@@ -276,6 +277,7 @@
 <div id="tagModal" class="modal hidden">
   <div class="sheet">
     <h3 id="tagTitle">タグ</h3>
+    <div class="sethint" id="tagHint">タップで付け外しできます。</div>
     <div id="tagPick" class="tagpick"></div>
     <div class="newcat">
       <input id="newTagInput" type="text" placeholder="新しいタグ名" enterkeyhint="done" autocomplete="off">
@@ -334,7 +336,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "1.3";
+const APP_VERSION = "1.4";
 
 /* iOS等でビューポート高さが揺れて下部バーが上にズレる問題への対策。
    CSSの100dvh任せにせず、実際の表示高さ(window.innerHeight)を測ってCSS変数に反映し、
@@ -381,6 +383,7 @@ const I18N = {
     confirmDeleteCat:(cat,n)=>`タグ「${cat}」を削除しますか？${n>0?`（${n}件から外れます）`:""}`,
     catDeleted:cat=>`タグ「${cat}」を削除しました`,
     editTags:"タグを編集", tagTitle:"タグ", noTagsYet:"まだタグがありません。下で作成できます。",
+    tagHint:"タップで付け外しできます（紫＝付与中・タップで解除）。",
     backup:"バックアップ",
     backupHint:"サイトデータの削除や機種変更に備えて、まとめをファイルに書き出せます。",
     exportBtn:"💾 バックアップを書き出す", importBtn:"📥 バックアップから読み込む",
@@ -428,6 +431,7 @@ const I18N = {
     confirmDeleteCat:(cat,n)=>`Delete tag “${cat}”?${n>0?` (removed from ${n} item${n===1?"":"s"})`:""}`,
     catDeleted:cat=>`Deleted tag “${cat}”`,
     editTags:"Edit tags", tagTitle:"Tags", noTagsYet:"No tags yet. Create one below.",
+    tagHint:"Tap to add or remove (purple = applied, tap to remove).",
     backup:"Backup",
     backupHint:"Export your summaries to a file in case site data is cleared or you switch devices.",
     exportBtn:"💾 Export backup", importBtn:"📥 Import backup",
@@ -788,7 +792,7 @@ function renderTagPick(){
   const m=META.find(x=>x.id===editingTagDocId); const has=new Set(m?tagsOf(m):[]);
   const all=allCategories();
   tagPick.innerHTML = all.length
-    ? all.map(tg=>`<button class="chip tagtoggle${has.has(tg)?" active":""}" data-tag="${esc(tg)}">${esc(tg)}${has.has(tg)?" ✓":""}</button>`).join("")
+    ? all.map(tg=>`<button class="chip tagtoggle${has.has(tg)?" active":""}" data-tag="${esc(tg)}">${esc(tg)}${has.has(tg)?` <span class="x">✕</span>`:""}</button>`).join("")
     : `<div class="sethint">${t("noTagsYet")}</div>`;
 }
 function openTagEditor(){
@@ -943,6 +947,7 @@ function applyStaticI18n(){
   $("#newCatBtn").textContent = t("newCatBtn");
   $("#catCancel").textContent = t("catCancel");
   $("#tagTitle").textContent = t("tagTitle");
+  $("#tagHint").textContent = t("tagHint");
   $("#newTagInput").placeholder = t("newCatPlaceholder");
   $("#newTagBtn").textContent = t("newCatBtn");
   $("#tagClose").textContent = t("settingsDone");
