@@ -96,7 +96,13 @@
     display:flex; flex-direction:column; aspect-ratio:1 / 1;
     box-shadow:0 8px 24px rgba(0,0,0,.30), 0 0 0 1px rgba(124,92,255,.04);}
   .card:active{transform:scale(.985);}
-  .card h3{margin:0 0 5px; font-size:14px; line-height:1.35; max-height:2.7em; overflow:hidden;}
+  .card h3{margin:0 0 5px; font-size:14px; line-height:1.35; max-height:2.7em; overflow:hidden; text-indent:26px;}
+  .card .star{position:absolute; top:8px; left:8px; width:24px; height:24px; z-index:2; cursor:pointer;
+    border:0; border-radius:50%; background:rgba(0,0,0,.35); color:var(--muted); font-size:15px; line-height:1;
+    display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}
+  .card .star.on{color:#ffd24a;}
+  .card .star:active{transform:scale(.82);}
+  .chip.chipstar .s{color:#ffd24a; margin-right:5px;}
   .card p{margin:0; color:var(--muted); font-size:12px; line-height:1.5; flex:1; min-height:0;
     display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;}
   .card .meta{margin-top:8px; color:var(--muted); font-size:10.5px; display:flex; justify-content:space-between;}
@@ -337,7 +343,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "1.5";
+const APP_VERSION = "1.6";
 
 /* iOS等でビューポート高さが揺れて下部バーが上にズレる問題への対策。
    CSSの100dvh任せにせず、実際の表示高さ(window.innerHeight)を測ってCSS変数に反映し、
@@ -363,8 +369,8 @@ const I18N = {
     catEmpty:"このタグのまとめはありません",
     countSummaries:n=>`${n}件のまとめ`,
     sortNew:"新しい順", sortOld:"古い順", sortTitle:"タイトル順",
-    catAll:"すべて", catNone:"タグなし",
-    scopeNone:"「タグなし」で ", scopeCat:c=>`「${c}」で `,
+    catAll:"すべて", catNone:"タグなし", starFilter:"スター", star:"スター",
+    scopeNone:"「タグなし」で ", scopeStar:"★スターで ", scopeCat:c=>`「${c}」で `,
     notFound:(scope,q)=>`${scope}「${q}」は見つかりません`,
     hitSummaries:(scope,n)=>`${scope}${n}件のまとめにヒット`,
     hitCount:n=>`${n}件ヒット`, untitled:"(無題)",
@@ -411,8 +417,8 @@ const I18N = {
     catEmpty:"No summaries with this tag",
     countSummaries:n=>`${n} item${n===1?"":"s"}`,
     sortNew:"Newest first", sortOld:"Oldest first", sortTitle:"By title",
-    catAll:"All", catNone:"Untagged",
-    scopeNone:"in “Untagged” ", scopeCat:c=>`in “${c}” `,
+    catAll:"All", catNone:"Untagged", starFilter:"Starred", star:"Star",
+    scopeNone:"in “Untagged” ", scopeStar:"in ★ Starred ", scopeCat:c=>`in “${c}” `,
     notFound:(scope,q)=>`No results for “${q}” ${scope}`,
     hitSummaries:(scope,n)=>`${n} item${n===1?"":"s"} matched ${scope}`,
     hitCount:n=>`${n} hit${n===1?"":"s"}`, untitled:"(Untitled)",
@@ -594,6 +600,7 @@ function allCategories(){
 }
 function matchesFilter(m){
   if(filterCat===null) return true;
+  if(filterCat==="__star__") return !!m.starred;
   if(filterCat==="__none__") return tagsOf(m).length===0;
   return tagsOf(m).includes(filterCat);
 }
@@ -603,6 +610,7 @@ function catBarHtml(){
   let h = `<div class="catbar">`;
   const chip=(key,label,count,active)=>`<button class="chip${active?" active":""}" data-cat="${esc(key)}">${esc(label)}<span class="n">${count}</span></button>`;
   h += chip("__all__",t("catAll"),META.length, filterCat===null);
+  h += `<button class="chip chipstar${filterCat==="__star__"?" active":""}" data-cat="__star__"><span class="s">★</span>${esc(t("starFilter"))}<span class="n">${META.filter(m=>m.starred).length}</span></button>`;
   for(const c of cats){ h += chip(c, c, META.filter(m=>tagsOf(m).includes(c)).length, filterCat===c); }
   if(noneCount>0) h += chip("__none__",t("catNone"),noneCount, filterCat==="__none__");
   h += `<button class="chip chipadd" data-cat="__add__" title="${esc(t("addCat"))}">＋</button>`;
@@ -621,7 +629,7 @@ function renderLibrary(){
     return;
   }
   // フィルタが指す対象が消えていたら「すべて」に戻す
-  if(filterCat && filterCat!=="__none__" && !allCategories().includes(filterCat)) filterCat=null;
+  if(filterCat && filterCat!=="__none__" && filterCat!=="__star__" && !allCategories().includes(filterCat)) filterCat=null;
 
   const filtered = sortMeta(META.filter(matchesFilter));
   viewList = filtered.map(m=>m.id);
@@ -648,6 +656,7 @@ function renderLibrary(){
     const more = tags.length>3 ? `<span class="cat more">+${tags.length-3}</span>` : "";
     const catBadge = tags.length ? `<div class="cats">${shown}${more}</div>` : "";
     html += `<div class="card" data-id="${m.id}">
+      <button class="star${m.starred?" on":""}" title="${esc(t("star"))}">${m.starred?"★":"☆"}</button>
       <h3>${esc(m.title)}</h3>
       <p>${esc(m.snippet||"")}</p>
       ${catBadge}
@@ -676,7 +685,7 @@ async function doSearch(q){
   found = found.filter(f=>{ const m=metaById[f.id]; return m && matchesFilter(m); });
   found.sort((a,b)=>b.count-a.count);
   viewList = found.map(f=>f.id);
-  const scope = filterCat===null ? "" : (filterCat==="__none__" ? t("scopeNone") : t("scopeCat", esc(filterCat)));
+  const scope = filterCat===null ? "" : (filterCat==="__star__" ? t("scopeStar") : filterCat==="__none__" ? t("scopeNone") : t("scopeCat", esc(filterCat)));
   if(found.length===0){
     results.innerHTML = `<div class="empty"><div class="big">🔍</div><h2>${t("notFound", scope, esc(q))}</h2></div>`;
     return;
@@ -1080,6 +1089,8 @@ restoreModal.addEventListener("click",(e)=>{ if(e.target===restoreModal) closeRe
 /* ---------- イベント ---------- */
 library.addEventListener("click",(e)=>{
   if(suppressClick){ suppressClick=false; return; }   // ドラッグ直後のクリックを無効化
+  const star=e.target.closest(".star");
+  if(star){ const c=star.closest(".card"); if(c) toggleStar(c.dataset.id, star); return; }
   const chip=e.target.closest(".chip");
   if(chip){
     const k=chip.dataset.cat;
@@ -1089,6 +1100,15 @@ library.addEventListener("click",(e)=>{
   const card=e.target.closest(".card"); if(!card) return;
   openDoc(card.dataset.id, "");
 });
+function toggleStar(id, btn){
+  const m=META.find(x=>x.id===id); if(!m) return;
+  m.starred = !m.starred; saveMeta(m);
+  if(filterCat==="__star__" && !m.starred){ renderLibrary(); return; }  // 星フィルタ中に外したら一覧から消す
+  btn.classList.toggle("on", !!m.starred);
+  btn.textContent = m.starred ? "★" : "☆";
+  const n = library.querySelector('.chip[data-cat="__star__"] .n');
+  if(n) n.textContent = META.filter(x=>x.starred).length;
+}
 results.addEventListener("click",(e)=>{
   const r=e.target.closest(".res"); if(!r) return;
   openDoc(r.dataset.id, searchInput.value.trim());
@@ -1163,12 +1183,13 @@ async function deleteByDrop(id){
 }
 
 library.addEventListener("pointerdown",(e)=>{
+  if(e.target.closest(".star")) return;   // スターボタンはドラッグ対象外
   const chip = e.target.closest(".chip");
   const card = e.target.closest(".card");
   let el, type, payload;
   if(chip){
     const k = chip.dataset.cat;
-    if(k==="__all__" || k==="__none__" || k==="__add__") return;  // これらは削除/移動の対象外
+    if(k==="__all__" || k==="__none__" || k==="__add__" || k==="__star__") return;  // これらは削除/移動の対象外
     el=chip; type="cat"; payload=k;
   }else if(card){
     el=card; type="card"; payload=card.dataset.id;
