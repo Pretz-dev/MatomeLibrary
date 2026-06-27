@@ -343,7 +343,7 @@
    ================================================================= */
 
 /* アプリのバージョン（GitHubのコミット番号と一致させる） */
-const APP_VERSION = "1.6";
+const APP_VERSION = "1.7";
 
 /* iOS等でビューポート高さが揺れて下部バーが上にズレる問題への対策。
    CSSの100dvh任せにせず、実際の表示高さ(window.innerHeight)を測ってCSS変数に反映し、
@@ -1288,6 +1288,7 @@ $("#rDelete").addEventListener("click", async ()=>{
   await deleteDocs([id]);
   META = META.filter(x=>x.id!==id);
   viewList.splice(curIndex,1);
+  libraryDirty = true;   // 戻ったときに一覧を再描画して、削除済みカードを消す
   if(viewList.length===0){ closeReader(); renderLibrary(); toast(t("deleted")); return; }
   if(curIndex>=viewList.length) curIndex=viewList.length-1;
   await showDoc(curIndex);
